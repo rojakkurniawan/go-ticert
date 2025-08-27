@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"ticert/dto/request"
 	"ticert/dto/response"
 	"ticert/entity"
@@ -12,6 +13,7 @@ import (
 	"ticert/utils/validator"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type UserService interface {
@@ -147,7 +149,10 @@ func (s *userService) RefreshToken(ctx context.Context, req *request.RefreshToke
 
 	user, err := s.userRepo.GetUserByID(claims.UserID)
 	if err != nil {
-		return nil, nil, errs.ErrUserNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil, errs.ErrUserNotFound
+		}
+		return nil, nil, errs.ErrInternalServerError
 	}
 
 	accessToken, err := jwt.GenerateAccessToken(user.ID, user.Email, user.Role)
@@ -181,7 +186,10 @@ func (s *userService) Logout(ctx context.Context, userID uuid.UUID) error {
 func (s *userService) GetUserByID(ctx context.Context, userID uuid.UUID) (*response.UserResponse, error) {
 	user, err := s.userRepo.GetUserByID(userID)
 	if err != nil {
-		return nil, errs.ErrUserNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errs.ErrUserNotFound
+		}
+		return nil, errs.ErrInternalServerError
 	}
 	return response.NewUserResponse(user), nil
 }
@@ -194,7 +202,10 @@ func (s *userService) UpdateUser(ctx context.Context, userCtx auth.ContextKey, r
 
 	user, err := s.userRepo.GetUserByID(userCtx.UserID)
 	if err != nil {
-		return nil, nil, errs.ErrUserNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil, errs.ErrUserNotFound
+		}
+		return nil, nil, errs.ErrInternalServerError
 	}
 
 	if req.FirstName != nil {
@@ -226,7 +237,10 @@ func (s *userService) UpdatePassword(ctx context.Context, userCtx auth.ContextKe
 
 	user, err := s.userRepo.GetUserByID(userCtx.UserID)
 	if err != nil {
-		return nil, nil, errs.ErrUserNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil, errs.ErrUserNotFound
+		}
+		return nil, nil, errs.ErrInternalServerError
 	}
 
 	if err := user.CheckPassword(req.OldPassword); err != nil {
@@ -258,7 +272,10 @@ func (s *userService) UpdateEmail(ctx context.Context, userCtx auth.ContextKey, 
 
 	user, err := s.userRepo.GetUserByID(userCtx.UserID)
 	if err != nil {
-		return nil, nil, errs.ErrUserNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil, errs.ErrUserNotFound
+		}
+		return nil, nil, errs.ErrInternalServerError
 	}
 
 	existingUser, _ := s.userRepo.GetUserByEmail(req.Email)
@@ -283,7 +300,10 @@ func (s *userService) UpdateEmail(ctx context.Context, userCtx auth.ContextKey, 
 func (s *userService) DeleteUser(ctx context.Context, userCtx auth.ContextKey) error {
 	user, err := s.userRepo.GetUserByID(userCtx.UserID)
 	if err != nil {
-		return errs.ErrUserNotFound
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errs.ErrUserNotFound
+		}
+		return errs.ErrInternalServerError
 	}
 
 	if err := s.userRepo.DeleteUser(user.ID); err != nil {
