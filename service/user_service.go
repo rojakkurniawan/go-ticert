@@ -23,6 +23,7 @@ type UserService interface {
 	UpdateUser(ctx context.Context, userCtx auth.ContextKey, req *request.UpdateUserRequest) (*response.UserResponse, map[string]string, error)
 	UpdatePassword(ctx context.Context, userCtx auth.ContextKey, req *request.UpdatePasswordRequest) (*response.UserResponse, map[string]string, error)
 	UpdateEmail(ctx context.Context, userCtx auth.ContextKey, req *request.UpdateEmailRequest) (*response.UserResponse, map[string]string, error)
+	DeleteUser(ctx context.Context, userCtx auth.ContextKey) error
 }
 
 type userService struct {
@@ -277,4 +278,17 @@ func (s *userService) UpdateEmail(ctx context.Context, userCtx auth.ContextKey, 
 	}
 
 	return response.NewUserResponse(updatedUser), nil, nil
+}
+
+func (s *userService) DeleteUser(ctx context.Context, userCtx auth.ContextKey) error {
+	user, err := s.userRepo.GetUserByID(userCtx.UserID)
+	if err != nil {
+		return errs.ErrUserNotFound
+	}
+
+	if err := s.userRepo.DeleteUser(user.ID); err != nil {
+		return errs.ErrInternalServerError
+	}
+
+	return nil
 }

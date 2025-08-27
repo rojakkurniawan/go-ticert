@@ -15,5 +15,6 @@ func SetupUserRoutes(r *gin.Engine, userController *controller.UserController) {
 		protected.PATCH("/profile", userController.UpdateProfile)
 		protected.PATCH("/password", userController.UpdatePassword)
 		protected.PATCH("/email", userController.UpdateEmail)
+		protected.DELETE("/", userController.DeleteUser)
 	}
 }

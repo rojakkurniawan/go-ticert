@@ -192,3 +192,18 @@ func (h *UserController) UpdateEmail(ctx *gin.Context) {
 
 	response.BuildSuccessResponse(ctx, http.StatusOK, "Email updated successfully", userResponse, nil)
 }
+
+func (h *UserController) DeleteUser(ctx *gin.Context) {
+	userCtx, err := auth.GetUserContextKey(ctx)
+	if err != nil {
+		response.BuildErrorResponse(ctx, err, nil)
+		return
+	}
+
+	if err := h.userService.DeleteUser(ctx, userCtx); err != nil {
+		response.BuildErrorResponse(ctx, err, nil)
+		return
+	}
+
+	response.BuildSuccessResponse(ctx, http.StatusOK, "User deleted successfully", nil, nil)
+}
