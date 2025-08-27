@@ -20,4 +20,9 @@ var (
 		Message:    "Bad request, Please check your request",
 		StatusCode: http.StatusBadRequest,
 	}
+
+	ErrAtleastOneField = response.ErrorModel{
+		Message:    "At least one field must be provided",
+		StatusCode: http.StatusBadRequest,
+	}
 )

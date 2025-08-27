@@ -221,6 +221,10 @@ func (s *userService) UpdateUser(ctx context.Context, userCtx auth.ContextKey, r
 		}
 	}
 
+	if user.FirstName == "" && user.LastName == "" && user.Role == "" {
+		return nil, nil, errs.ErrAtleastOneField
+	}
+
 	updatedUser, err := s.userRepo.UpdateUser(user)
 	if err != nil {
 		return nil, nil, errs.ErrInternalServerError
