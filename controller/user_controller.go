@@ -24,7 +24,7 @@ func NewUserController(userService service.UserService) *UserController {
 func (h *UserController) Register(ctx *gin.Context) {
 	var req request.RegisterRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BuildErrorResponse(ctx, errs.ErrBadRequest, nil)
+		response.BuildErrorResponse(ctx, errs.ErrBadRequest)
 		return
 	}
 
@@ -34,7 +34,7 @@ func (h *UserController) Register(ctx *gin.Context) {
 		return
 	}
 	if err != nil {
-		response.BuildErrorResponse(ctx, err, nil)
+		response.BuildErrorResponse(ctx, err)
 		return
 	}
 
@@ -44,7 +44,7 @@ func (h *UserController) Register(ctx *gin.Context) {
 func (h *UserController) Login(ctx *gin.Context) {
 	var req request.LoginRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BuildErrorResponse(ctx, errs.ErrBadRequest, nil)
+		response.BuildErrorResponse(ctx, errs.ErrBadRequest)
 		return
 	}
 
@@ -54,7 +54,7 @@ func (h *UserController) Login(ctx *gin.Context) {
 		return
 	}
 	if err != nil {
-		response.BuildErrorResponse(ctx, err, nil)
+		response.BuildErrorResponse(ctx, err)
 		return
 	}
 
@@ -64,7 +64,7 @@ func (h *UserController) Login(ctx *gin.Context) {
 func (h *UserController) RefreshToken(ctx *gin.Context) {
 	var req request.RefreshTokenRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BuildErrorResponse(ctx, errs.ErrBadRequest, nil)
+		response.BuildErrorResponse(ctx, errs.ErrBadRequest)
 		return
 	}
 
@@ -74,7 +74,7 @@ func (h *UserController) RefreshToken(ctx *gin.Context) {
 		return
 	}
 	if err != nil {
-		response.BuildErrorResponse(ctx, err, nil)
+		response.BuildErrorResponse(ctx, err)
 		return
 	}
 
@@ -84,12 +84,12 @@ func (h *UserController) RefreshToken(ctx *gin.Context) {
 func (h *UserController) Logout(ctx *gin.Context) {
 	userCtx, err := auth.GetUserContextKey(ctx)
 	if err != nil {
-		response.BuildErrorResponse(ctx, err, nil)
+		response.BuildErrorResponse(ctx, err)
 		return
 	}
 
 	if err := h.userService.Logout(ctx, userCtx.UserID); err != nil {
-		response.BuildErrorResponse(ctx, err, nil)
+		response.BuildErrorResponse(ctx, err)
 		return
 	}
 
@@ -99,13 +99,13 @@ func (h *UserController) Logout(ctx *gin.Context) {
 func (h *UserController) GetProfile(ctx *gin.Context) {
 	userCtx, err := auth.GetUserContextKey(ctx)
 	if err != nil {
-		response.BuildErrorResponse(ctx, err, nil)
+		response.BuildErrorResponse(ctx, err)
 		return
 	}
 
 	userResponse, err := h.userService.GetUserByID(ctx, userCtx.UserID)
 	if err != nil {
-		response.BuildErrorResponse(ctx, err, nil)
+		response.BuildErrorResponse(ctx, err)
 		return
 	}
 
@@ -115,13 +115,13 @@ func (h *UserController) GetProfile(ctx *gin.Context) {
 func (h *UserController) UpdateProfile(ctx *gin.Context) {
 	userCtx, err := auth.GetUserContextKey(ctx)
 	if err != nil {
-		response.BuildErrorResponse(ctx, err, nil)
+		response.BuildErrorResponse(ctx, err)
 		return
 	}
 
 	var req request.UpdateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BuildErrorResponse(ctx, errs.ErrBadRequest, nil)
+		response.BuildErrorResponse(ctx, errs.ErrBadRequest)
 		return
 	}
 
@@ -132,7 +132,7 @@ func (h *UserController) UpdateProfile(ctx *gin.Context) {
 	}
 
 	if err != nil {
-		response.BuildErrorResponse(ctx, err, nil)
+		response.BuildErrorResponse(ctx, err)
 		return
 	}
 
@@ -142,13 +142,13 @@ func (h *UserController) UpdateProfile(ctx *gin.Context) {
 func (h *UserController) UpdatePassword(ctx *gin.Context) {
 	userCtx, err := auth.GetUserContextKey(ctx)
 	if err != nil {
-		response.BuildErrorResponse(ctx, err, nil)
+		response.BuildErrorResponse(ctx, err)
 		return
 	}
 
 	var req request.UpdatePasswordRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BuildErrorResponse(ctx, errs.ErrBadRequest, nil)
+		response.BuildErrorResponse(ctx, errs.ErrBadRequest)
 		return
 	}
 
@@ -159,7 +159,7 @@ func (h *UserController) UpdatePassword(ctx *gin.Context) {
 	}
 
 	if err != nil {
-		response.BuildErrorResponse(ctx, err, nil)
+		response.BuildErrorResponse(ctx, err)
 		return
 	}
 
@@ -169,13 +169,13 @@ func (h *UserController) UpdatePassword(ctx *gin.Context) {
 func (h *UserController) UpdateEmail(ctx *gin.Context) {
 	userCtx, err := auth.GetUserContextKey(ctx)
 	if err != nil {
-		response.BuildErrorResponse(ctx, err, nil)
+		response.BuildErrorResponse(ctx, err)
 		return
 	}
 
 	var req request.UpdateEmailRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		response.BuildErrorResponse(ctx, errs.ErrBadRequest, nil)
+		response.BuildErrorResponse(ctx, errs.ErrBadRequest)
 		return
 	}
 
@@ -186,7 +186,7 @@ func (h *UserController) UpdateEmail(ctx *gin.Context) {
 	}
 
 	if err != nil {
-		response.BuildErrorResponse(ctx, err, nil)
+		response.BuildErrorResponse(ctx, err)
 		return
 	}
 
@@ -196,12 +196,12 @@ func (h *UserController) UpdateEmail(ctx *gin.Context) {
 func (h *UserController) DeleteUser(ctx *gin.Context) {
 	userCtx, err := auth.GetUserContextKey(ctx)
 	if err != nil {
-		response.BuildErrorResponse(ctx, err, nil)
+		response.BuildErrorResponse(ctx, err)
 		return
 	}
 
 	if err := h.userService.DeleteUser(ctx, userCtx); err != nil {
-		response.BuildErrorResponse(ctx, err, nil)
+		response.BuildErrorResponse(ctx, err)
 		return
 	}
 

@@ -29,7 +29,7 @@ type ErrorResponse struct {
 	Error   interface{} `json:"error,omitempty"`
 }
 
-func BuildErrorResponse(c *gin.Context, err interface{}, details interface{}) {
+func BuildErrorResponse(c *gin.Context, err interface{}) {
 	var message string
 	var statusCode int
 
@@ -47,10 +47,6 @@ func BuildErrorResponse(c *gin.Context, err interface{}, details interface{}) {
 	response := ErrorResponse{
 		Success: false,
 		Message: message,
-	}
-
-	if details != nil {
-		response.Error = details
 	}
 
 	c.JSON(statusCode, response)
