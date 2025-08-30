@@ -7,6 +7,7 @@ import (
 	"ticert/dto/response"
 	"ticert/entity"
 	"ticert/repository"
+	"ticert/utils/auth"
 	"ticert/utils/errs"
 	utils_response "ticert/utils/response"
 	"ticert/utils/validator"
@@ -18,9 +19,10 @@ import (
 type OrderService interface {
 	CreateOrder(ctx context.Context, req *request.OrderRequest, userID uuid.UUID) (*response.OrderResponse, map[string]string, error)
 	GetOrders(ctx context.Context, userID uuid.UUID, req *request.GetOrdersRequest) (*response.OrderListResponse, map[string]string, error)
-	GetOrderById(ctx context.Context, orderID uuid.UUID, userID uuid.UUID) (*response.OrderResponse, error)
+	GetOrdersAdmin(ctx context.Context, req *request.GetOrdersRequestAdmin) (*response.OrderListResponse, map[string]string, error)
+	GetOrderById(ctx context.Context, orderID uuid.UUID, userCtx *auth.ContextKey) (*response.OrderResponse, error)
 	CancelOrder(ctx context.Context, orderID uuid.UUID, userID uuid.UUID) error
-	VerifyOrderStatus(ctx context.Context, orderID uuid.UUID, userID uuid.UUID) error
+	VerifyOrderStatus(ctx context.Context, orderID uuid.UUID) error
 	VerifyTicket(ctx context.Context, ticketCode string) error
 }
 
@@ -155,7 +157,59 @@ func (s *orderService) GetOrders(ctx context.Context, userID uuid.UUID, req *req
 	}, nil, nil
 }
 
-func (s *orderService) GetOrderById(ctx context.Context, orderID uuid.UUID, userID uuid.UUID) (*response.OrderResponse, error) {
+func (s *orderService) GetOrdersAdmin(ctx context.Context, req *request.GetOrdersRequestAdmin) (*response.OrderListResponse, map[string]string, error) {
+
+	if req.Page < 1 {
+		req.Page = 1
+	}
+	if req.Limit < 1 {
+		req.Limit = 10
+	}
+	if req.Limit > 100 {
+		req.Limit = 100
+	}
+
+	validationErrors := validator.HandleValidationErrors(req)
+	if validationErrors != nil {
+		return nil, validationErrors, nil
+	}
+
+	orders, total, err := s.orderRepository.GetOrdersAdmin(req.Page, req.Limit, req.Status, req.Search, req.OrderBy)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if len(orders) == 0 {
+		return &response.OrderListResponse{
+			Orders: []*response.OrderResponse{},
+			Pagination: &utils_response.Pagination{
+				Page:       req.Page,
+				Limit:      req.Limit,
+				TotalPages: 0,
+				Total:      total,
+			},
+		}, nil, nil
+	}
+
+	var orderResponses []*response.OrderResponse
+	for _, order := range orders {
+		orderResponses = append(orderResponses, response.NewOrderResponse(order))
+	}
+
+	totalPages := int((total + int64(req.Limit) - 1) / int64(req.Limit))
+
+	return &response.OrderListResponse{
+		Orders: orderResponses,
+		Pagination: &utils_response.Pagination{
+			Page:       req.Page,
+			Limit:      req.Limit,
+			TotalPages: totalPages,
+			Total:      total,
+		},
+	}, nil, nil
+}
+
+func (s *orderService) GetOrderById(ctx context.Context, orderID uuid.UUID, userCtx *auth.ContextKey) (*response.OrderResponse, error) {
 	order, err := s.orderRepository.GetOrderById(orderID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -164,10 +218,9 @@ func (s *orderService) GetOrderById(ctx context.Context, orderID uuid.UUID, user
 		return nil, errs.ErrInternalServerError
 	}
 
-	if order.UserID != userID {
+	if userCtx.Role != "admin" && order.UserID != userCtx.UserID {
 		return nil, errs.ErrUnauthorized
 	}
-
 	return response.NewOrderResponse(order), nil
 }
 
@@ -199,17 +252,13 @@ func (s *orderService) CancelOrder(ctx context.Context, orderID uuid.UUID, userI
 	return nil
 }
 
-func (s *orderService) VerifyOrderStatus(ctx context.Context, orderID uuid.UUID, userID uuid.UUID) error {
+func (s *orderService) VerifyOrderStatus(ctx context.Context, orderID uuid.UUID) error {
 	order, err := s.orderRepository.GetOrderById(orderID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return errs.ErrOrderNotFound
 		}
 		return errs.ErrInternalServerError
-	}
-
-	if order.UserID != userID {
-		return errs.ErrUnauthorized
 	}
 
 	if order.Status == "cancelled" {

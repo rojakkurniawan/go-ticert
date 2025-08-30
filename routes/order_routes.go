@@ -16,7 +16,8 @@ func SetupOrderRoutes(r *gin.Engine, orderController *controller.OrderController
 		protected.GET("/", orderController.GetOrders)
 		protected.GET("/:id", orderController.GetOrderById)
 		protected.PATCH("/:id/cancel", orderController.CancelOrder)
+		protected.GET("/admin", middleware.RoleMiddleware("admin"), orderController.GetOrdersAdmin)
 		protected.PATCH("/:id/verify", middleware.RoleMiddleware("admin"), orderController.VerifyOrderStatus)
-		protected.PATCH("/redeem/:ticket_code", orderController.VerifyTicket)
+		protected.PATCH("/redeem/:ticket_code", middleware.RoleMiddleware("admin"), orderController.VerifyTicket)
 	}
 }

@@ -74,6 +74,27 @@ func (h *OrderController) GetOrders(ctx *gin.Context) {
 	response.BuildSuccessResponse(ctx, http.StatusOK, "Orders fetched successfully", orders, nil)
 }
 
+func (h *OrderController) GetOrdersAdmin(ctx *gin.Context) {
+	var req request.GetOrdersRequestAdmin
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		response.BuildErrorResponse(ctx, errs.ErrBadRequest)
+		return
+	}
+
+	orders, validationErrors, err := h.orderService.GetOrdersAdmin(ctx, &req)
+	if validationErrors != nil {
+		response.BuildValidationErrorResponse(ctx, validationErrors)
+		return
+	}
+
+	if err != nil {
+		response.BuildErrorResponse(ctx, err)
+		return
+	}
+
+	response.BuildSuccessResponse(ctx, http.StatusOK, "Orders fetched successfully", orders, nil)
+}
+
 func (h *OrderController) GetOrderById(ctx *gin.Context) {
 	userCtx, err := auth.GetUserContextKey(ctx)
 	if err != nil {
@@ -87,7 +108,7 @@ func (h *OrderController) GetOrderById(ctx *gin.Context) {
 		return
 	}
 
-	order, err := h.orderService.GetOrderById(ctx, orderID, userCtx.UserID)
+	order, err := h.orderService.GetOrderById(ctx, orderID, &userCtx)
 	if err != nil {
 		response.BuildErrorResponse(ctx, err)
 		return
@@ -117,19 +138,13 @@ func (h *OrderController) CancelOrder(ctx *gin.Context) {
 }
 
 func (h *OrderController) VerifyOrderStatus(ctx *gin.Context) {
-	userCtx, err := auth.GetUserContextKey(ctx)
-	if err != nil {
-		response.BuildErrorResponse(ctx, err)
-		return
-	}
-
 	orderID, err := uuid.Parse(ctx.Param("id"))
 	if err != nil {
 		response.BuildErrorResponse(ctx, errs.ErrBadRequest)
 		return
 	}
 
-	if err := h.orderService.VerifyOrderStatus(ctx, orderID, userCtx.UserID); err != nil {
+	if err := h.orderService.VerifyOrderStatus(ctx, orderID); err != nil {
 		response.BuildErrorResponse(ctx, err)
 		return
 	}

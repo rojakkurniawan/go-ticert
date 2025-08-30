@@ -18,3 +18,11 @@ type GetOrdersRequest struct {
 	Page  int `form:"page" validate:"omitempty,min=1"`
 	Limit int `form:"limit" validate:"omitempty,min=1"`
 }
+
+type GetOrdersRequestAdmin struct {
+	Page    int    `form:"page" validate:"omitempty"`
+	Limit   int    `form:"limit" validate:"omitempty"`
+	Status  string `form:"status" validate:"omitempty,oneof=pending paid cancelled"`
+	Search  string `form:"search" validate:"omitempty,max=255"`
+	OrderBy string `form:"order_by" validate:"omitempty,oneof=asc desc quantity_asc quantity_desc total_price_asc total_price_desc"`
+}

@@ -10,6 +10,7 @@ import (
 type OrderRepository interface {
 	CreateOrder(order *entity.Order, orderDetails []*entity.OrderDetail, categoryID uuid.UUID, quantity int) error
 	GetOrders(page, limit int, userID uuid.UUID) ([]*entity.Order, int64, error)
+	GetOrdersAdmin(page, limit int, status, search string, orderBy string) ([]*entity.Order, int64, error)
 	GetOrderById(orderID uuid.UUID) (*entity.Order, error)
 	GetOrderDetailByTicketCode(ticketCode string) (*entity.OrderDetail, error)
 	CancelOrder(orderID uuid.UUID) error
@@ -87,6 +88,62 @@ func (r *orderRepository) GetOrders(page, limit int, userID uuid.UUID) ([]*entit
 	}
 
 	if err := query.Find(&orders).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return orders, total, nil
+}
+
+func (r *orderRepository) GetOrdersAdmin(page, limit int, status, search string, orderBy string) ([]*entity.Order, int64, error) {
+	var orders []*entity.Order
+	var total int64
+
+	validOrderings := map[string]string{
+		"asc":              "orders.created_at ASC",
+		"desc":             "orders.created_at DESC",
+		"quantity_asc":     "orders.quantity ASC",
+		"quantity_desc":    "orders.quantity DESC",
+		"total_price_asc":  "orders.total_price ASC",
+		"total_price_desc": "orders.total_price DESC",
+	}
+
+	baseQuery := r.db.Model(&entity.Order{}).
+		Joins("JOIN categories ON categories.id = orders.category_id").
+		Joins("JOIN events ON events.id = categories.event_id").
+		Joins("JOIN users ON users.id = orders.user_id")
+
+	if status != "" {
+		baseQuery = baseQuery.Where("orders.status = ?", status)
+	}
+
+	if search != "" {
+		likeSearch := "%" + search + "%"
+		baseQuery = baseQuery.Where(
+			"orders.invoice_id LIKE ? OR orders.user_id LIKE ? OR events.organizer LIKE ? OR events.title LIKE ? OR events.description LIKE ? OR events.location LIKE ? OR users.first_name LIKE ? OR users.last_name LIKE ? OR categories.name LIKE ?",
+			likeSearch, likeSearch, likeSearch, likeSearch, likeSearch, likeSearch, likeSearch, likeSearch, likeSearch,
+		)
+	}
+
+	orderClause := "orders.created_at DESC"
+	if v, exists := validOrderings[orderBy]; exists {
+		orderClause = v
+	}
+	baseQuery = baseQuery.Order(orderClause)
+
+	if err := baseQuery.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	dataQuery := baseQuery.
+		Preload("OrderDetails").
+		Preload("Category.Event").
+		Preload("User")
+
+	if page > 0 && limit > 0 {
+		dataQuery = dataQuery.Offset((page - 1) * limit).Limit(limit)
+	}
+
+	if err := dataQuery.Find(&orders).Error; err != nil {
 		return nil, 0, err
 	}
 
