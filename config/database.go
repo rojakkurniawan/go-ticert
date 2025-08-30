@@ -35,6 +35,10 @@ func InitDatabase() *gorm.DB {
 func AutoMigrate(db *gorm.DB) {
 	err := db.AutoMigrate(
 		&entity.User{},
+		&entity.Event{},
+		&entity.Category{},
+		&entity.Order{},
+		&entity.OrderDetail{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to auto migrate: %v", err)
