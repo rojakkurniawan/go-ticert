@@ -105,10 +105,6 @@ func getErrorMessage(fe validator.FieldError, jsonFieldName string) string {
 		return fmt.Sprintf("%s must match with the previous field", fieldDisplayName)
 	case "datetime":
 		return fmt.Sprintf("invalid %s format, please enter valid date and time", fieldDisplayName)
-	case "date":
-		return fmt.Sprintf("invalid %s format, please enter valid date", fieldDisplayName)
-	case "time":
-		return fmt.Sprintf("invalid %s format, please enter valid time", fieldDisplayName)
 	case "unique":
 		return fmt.Sprintf("%s cannot contain duplicate values", fieldDisplayName)
 	default:

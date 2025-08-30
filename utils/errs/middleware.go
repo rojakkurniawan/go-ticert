@@ -30,4 +30,9 @@ var (
 		Message:    "Your session has expired, please login again",
 		StatusCode: http.StatusUnauthorized,
 	}
+
+	ErrUnauthorized = response.ErrorModel{
+		Message:    "You are not authorized to access this resource",
+		StatusCode: http.StatusUnauthorized,
+	}
 )
